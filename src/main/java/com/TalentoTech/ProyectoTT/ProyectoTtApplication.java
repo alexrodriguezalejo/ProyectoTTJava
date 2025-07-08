@@ -1,13 +1,13 @@
-package com.TalentoTech.Proyecto;
+package com.TalentoTech.ProyectoTT;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class ProyectoTTApplication {
+public class ProyectoTtApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(ProyectoTTApplication.class, args);
+		SpringApplication.run(ProyectoTtApplication.class, args);
 	}
 
 }

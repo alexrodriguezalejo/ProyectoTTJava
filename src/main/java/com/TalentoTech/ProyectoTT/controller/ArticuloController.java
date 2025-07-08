@@ -1,7 +1,7 @@
-package com.TalentoTech.Proyecto.controller;
+package com.TalentoTech.ProyectoTT.controller;
 
-import com.TalentoTech.Proyecto.model.Articulo;
-import com.TalentoTech.Proyecto.repository.ArticuloRepository;
+import com.TalentoTech.ProyectoTT.model.Articulo;
+import com.TalentoTech.ProyectoTT.repository.ArticuloRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

@@ -1,10 +1,10 @@
-package com.TalentoTech.miPrimerApi;
+package com.TalentoTech.ProyectoTT;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class MiPrimerApiApplicationTests {
+class ProyectoTtApplicationTests {
 
 	@Test
 	void contextLoads() {

@@ -1,6 +1,6 @@
-package com.TalentoTech.Proyecto.controller;
-import com.TalentoTech.Proyecto.model.Pedido;
-import com.TalentoTech.Proyecto.service.PedidoService;
+package com.TalentoTech.ProyectoTT.controller;
+import com.TalentoTech.ProyectoTT.model.Pedido;
+import com.TalentoTech.ProyectoTT.service.PedidoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

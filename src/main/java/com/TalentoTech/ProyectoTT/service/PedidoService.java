@@ -1,11 +1,11 @@
-package com.TalentoTech.Proyecto.service;
+package com.TalentoTech.ProyectoTT.service;
 
 import java.util.List;
 import java.util.ArrayList;
-import com.TalentoTech.Proyecto.model.Pedido;
-import com.TalentoTech.Proyecto.model.Articulo;
-import com.TalentoTech.Proyecto.repository.PedidoRepository;
-import com.TalentoTech.Proyecto.repository.ArticuloRepository;
+import com.TalentoTech.ProyectoTT.model.Pedido;
+import com.TalentoTech.ProyectoTT.model.Articulo;
+import com.TalentoTech.ProyectoTT.repository.PedidoRepository;
+import com.TalentoTech.ProyectoTT.repository.ArticuloRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

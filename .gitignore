@@ -31,12 +31,3 @@ build/
 
 ### VS Code ###
 .vscode/
-
-# Archivos de configuración con datos sensibles
-/src/main/resources/application.properties
-/src/main/resources/application.yml
-
-# Si usas perfiles, también ignorá:
-src/main/resources/application-*.properties
-src/main/resources/application-*.yml
-/bin/

@@ -1,4 +1,4 @@
-package com.TalentoTech.Proyecto.model;
+package com.TalentoTech.ProyectoTT.model;
 
 import jakarta.persistence.*;
 

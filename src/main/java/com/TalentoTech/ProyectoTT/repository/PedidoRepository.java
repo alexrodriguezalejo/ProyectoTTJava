@@ -1,6 +1,6 @@
-package com.TalentoTech.Proyecto.repository;
+package com.TalentoTech.ProyectoTT.repository;
 
-import com.TalentoTech.Proyecto.model.Pedido;
+import com.TalentoTech.ProyectoTT.model.Pedido;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface PedidoRepository extends JpaRepository<Pedido, Long> {
