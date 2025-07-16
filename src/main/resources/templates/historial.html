@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Historial de Pedidos</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 30px;
+      background: #f4f4f4;
+      max-width: 900px;
+      margin: auto;
+    }
+    h1, h2 {
+      text-align: center;
+      color: #333;
+    }
+    section {
+      background: white;
+      padding: 20px;
+      margin-bottom: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
+      text-align: center;
+    }
+    th {
+      background: #007bff;
+      color: white;
+    }
+    input[type=number] {
+      width: 80px;
+      padding: 5px;
+      margin-right: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      text-align: center;
+    }
+    button {
+      padding: 7px 15px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .detalle-pedido {
+      margin-top: 15px;
+      padding: 10px;
+      background: #e9ecef;
+      border-radius: 8px;
+    }
+    .volver {
+      text-align: center;
+      margin-top: 30px;
+    }
+    .volver a {
+      text-decoration: none;
+      color: #007bff;
+      font-weight: bold;
+    }
+    .volver a:hover {
+      text-decoration: underline;
+    }
+    .mensaje {
+      margin-top: 10px;
+      font-weight: bold;
+      text-align: center;
+      color: green;
+    }
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Historial de Pedidos</h1>
+
+  <!-- Sección: Listar todos los pedidos -->
+  <section>
+    <h2>Todos los Pedidos</h2>
+    <button onclick="listarPedidos()">Actualizar Lista</button>
+    <table id="tablaPedidos">
+      <thead>
+        <tr>
+          <th>ID Pedido</th>
+          <th>Fecha</th>
+          <th>Estado</th>
+          <th>Costo Total</th>
+          <th>Detalles</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <!-- Sección: Buscar pedido por ID -->
+  <section>
+    <h2>Buscar Pedido por ID</h2>
+    <input type="number" id="inputPedidoId" placeholder="ID del pedido" />
+    <button onclick="buscarPedido()">Buscar</button>
+    <div class="mensaje" id="msgBuscarPedido"></div>
+    <div id="detallePedido" class="detalle-pedido"></div>
+  </section>
+
+  <div class="volver">
+    <a th:href="@{/}">← Volver al Menú Principal</a>
+  </div>
+
+  <script>
+    // Listar todos los pedidos
+    function listarPedidos() {
+      fetch('/api/pedidos')
+        .then(res => res.json())
+        .then(data => {
+          const tbody = document.querySelector("#tablaPedidos tbody");
+          tbody.innerHTML = "";
+          data.forEach(pedido => {
+            const fecha = pedido.fecha ? new Date(pedido.fecha).toLocaleDateString() : 'N/A';
+            const estado = pedido.estado || 'Pendiente';
+            const costoTotal = pedido.costoTotal !== undefined ? pedido.costoTotal.toFixed(2) : calcularCostoTotal(pedido.items);
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td>${pedido.id}</td>
+              <td>${fecha}</td>
+              <td>${estado}</td>
+              <td>$${costoTotal}</td>
+              <td><button onclick="mostrarDetalle(${pedido.id})">Ver Detalle</button></td>
+            `;
+            tbody.appendChild(tr);
+          });
+        })
+        .catch(() => alert("Error al listar pedidos."));
+    }
+
+    // Calcular costo total en caso de que no venga directo (por ejemplo, si tu modelo no lo envía)
+    function calcularCostoTotal(items) {
+      if (!items) return '0.00';
+      return items.reduce((sum, item) => sum + (item.producto?.precio || 0) * item.cantidad, 0).toFixed(2);
+    }
+
+    // Mostrar detalle pedido
+    function mostrarDetalle(pedidoId) {
+      fetch(`/api/pedidos/${pedidoId}`)
+        .then(res => {
+          if (!res.ok) throw new Error("Pedido no encontrado");
+          return res.json();
+        })
+        .then(pedido => {
+          let html = `<h3>Detalle Pedido #${pedido.id}</h3>`;
+          if (pedido.fecha) html += `<p><strong>Fecha:</strong> ${new Date(pedido.fecha).toLocaleString()}</p>`;
+          html += `<p><strong>Estado:</strong> ${pedido.estado || 'Pendiente'}</p>`;
+          html += `<table>
+                      <thead>
+                        <tr>
+                          <th>Producto</th>
+                          <th>Cantidad</th>
+                          <th>Precio Unitario</th>
+                          <th>Subtotal</th>
+                        </tr>
+                      </thead>
+                      <tbody>`;
+          pedido.items.forEach(item => {
+            const nombre = item.producto?.nombre || 'Desconocido';
+            const precio = item.producto?.precio || 0;
+            html += `<tr>
+              <td>${nombre}</td>
+              <td>${item.cantidad}</td>
+              <td>$${precio.toFixed(2)}</td>
+              <td>$${(precio * item.cantidad).toFixed(2)}</td>
+            </tr>`;
+          });
+          html += `</tbody></table>`;
+          html += `<p><strong>Total:</strong> $${calcularCostoTotal(pedido.items)}</p>`;
+          document.getElementById("detallePedido").innerHTML = html;
+          document.getElementById("msgBuscarPedido").textContent = "";
+          document.getElementById("msgBuscarPedido").classList.remove("error");
+        })
+        .catch(err => {
+          document.getElementById("detallePedido").innerHTML = "";
+          document.getElementById("msgBuscarPedido").textContent = "❌ " + err.message;
+          document.getElementById("msgBuscarPedido").classList.add("error");
+        });
+    }
+
+    // Buscar pedido por ID
+    function buscarPedido() {
+      const id = document.getElementById("inputPedidoId").value.trim();
+      if (!id) {
+        alert("Por favor ingrese un ID de pedido.");
+        return;
+      }
+      mostrarDetalle(id);
+    }
+
+    window.onload = () => {
+      listarPedidos();
+    };
+  </script>
+
+</body>
+</html>

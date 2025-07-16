@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Resumen y Confirmación de Pedido</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 30px;
+      background: #f4f4f4;
+      max-width: 700px;
+      margin: auto;
+    }
+    h1, h2 {
+      text-align: center;
+      color: #333;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid #ddd;
+      text-align: center;
+    }
+    th {
+      background: #007bff;
+      color: white;
+    }
+    .total {
+      font-weight: bold;
+      text-align: right;
+      margin-top: 15px;
+      font-size: 1.2em;
+    }
+    button {
+      display: block;
+      margin: 30px auto 0;
+      padding: 12px 20px;
+      background: #28a745;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 1em;
+    }
+    button:hover {
+      background: #1e7e34;
+    }
+    .mensaje {
+      text-align: center;
+      margin-top: 15px;
+      font-weight: bold;
+      color: green;
+    }
+    .error {
+      color: red;
+    }
+    .volver {
+      text-align: center;
+      margin-top: 30px;
+    }
+    .volver a {
+      text-decoration: none;
+      color: #007bff;
+      font-weight: bold;
+    }
+    .volver a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Resumen del Pedido</h1>
+
+  <table id="tablaPedido">
+    <thead>
+      <tr>
+        <th>Producto</th>
+        <th>Cantidad</th>
+        <th>Precio Unitario</th>
+        <th>Subtotal</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <div class="total" id="totalPedido">Total: $0.00</div>
+
+  <button id="confirmarBtn">Confirmar Pedido</button>
+
+  <div class="mensaje" id="msgPedido"></div>
+
+  <div class="volver">
+    <a th:href="@{/carrito}">← Volver al Carrito</a>
+  </div>
+
+  <script>
+    // Cargar productos del carrito desde localStorage
+    const carrito = JSON.parse(localStorage.getItem('carrito')) || [];
+
+    const tbody = document.querySelector('#tablaPedido tbody');
+    const totalPedido = document.getElementById('totalPedido');
+    const msgPedido = document.getElementById('msgPedido');
+    const confirmarBtn = document.getElementById('confirmarBtn');
+
+    function mostrarResumen() {
+      tbody.innerHTML = '';
+
+      if (carrito.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4">El carrito está vacío.</td></tr>';
+        confirmarBtn.disabled = true;
+        totalPedido.textContent = 'Total: $0.00';
+        return;
+      }
+
+      let total = 0;
+
+      carrito.forEach(item => {
+        const subtotal = item.precio * item.cantidad;
+        total += subtotal;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${item.nombre}</td>
+          <td>${item.cantidad}</td>
+          <td>$${item.precio.toFixed(2)}</td>
+          <td>$${subtotal.toFixed(2)}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      totalPedido.textContent = `Total: $${total.toFixed(2)}`;
+      confirmarBtn.disabled = false;
+    }
+
+    confirmarBtn.addEventListener('click', () => {
+      if (carrito.length === 0) return;
+
+      // Por ahora usamos usuarioId fijo = 1 (más adelante usarás sesión/usuarios)
+      const pedido = {
+        items: carrito.map(p => ({
+          productoId: p.id,
+          cantidad: p.cantidad
+        }))
+      };
+
+      fetch('/api/pedidos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(pedido)
+      })
+      .then(res => {
+        if (res.ok) {
+          msgPedido.textContent = '✅ Pedido confirmado con éxito.';
+          localStorage.removeItem('carrito');
+          mostrarResumen();
+        } else {
+          return res.json().then(data => { throw new Error(data.message || 'Error al confirmar pedido.'); });
+        }
+      })
+      .catch(err => {
+        msgPedido.textContent = `❌ ${err.message}`;
+        msgPedido.classList.add('error');
+      });
+    });
+
+    mostrarResumen();
+  </script>
+
+</body>
+</html>

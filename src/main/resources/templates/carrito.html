@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Carrito de Compras</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 30px;
+      background: #f4f4f4;
+    }
+    h1, h2 {
+      text-align: center;
+      color: #333;
+    }
+    section {
+      background: white;
+      padding: 20px;
+      margin-bottom: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .producto, .carrito-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #ddd;
+    }
+    .producto img, .carrito-item img {
+      width: 60px;
+      height: 60px;
+      object-fit: contain;
+      margin-right: 15px;
+    }
+    .producto-info, .carrito-info {
+      flex: 1;
+      display: flex;
+      align-items: center;
+    }
+    .producto-info > div, .carrito-info > div {
+      margin-right: 10px;
+    }
+    button {
+      padding: 5px 10px;
+      background: #007bff;
+      border: none;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    input.cantidad-input {
+      width: 50px;
+      padding: 5px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      text-align: center;
+    }
+    .total {
+      text-align: right;
+      font-weight: bold;
+      font-size: 1.2em;
+      margin-top: 15px;
+    }
+    .mensaje {
+      text-align: center;
+      color: green;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    .vaciar-btn {
+      background: #dc3545;
+      margin-top: 10px;
+    }
+    .vaciar-btn:hover {
+      background: #a71d2a;
+    }
+    .confirmar-btn {
+      margin-top: 15px;
+      background: #28a745;
+    }
+    .confirmar-btn:hover {
+      background: #1e7e34;
+    }
+    .volver {
+      text-align: center;
+      margin-top: 30px;
+    }
+    .volver a {
+      text-decoration: none;
+      color: #007bff;
+      font-weight: bold;
+    }
+    .volver a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Carrito de Compras</h1>
+
+  <!-- Sección: Productos disponibles -->
+  <section id="productosDisponibles">
+    <h2>Productos Disponibles</h2>
+    <div id="listaProductos"></div>
+  </section>
+
+  <!-- Sección: Carrito -->
+  <section id="carritoSection">
+    <h2>Tu Carrito</h2>
+    <div id="listaCarrito"></div>
+    <div class="total" id="totalCarrito">Total: $0.00</div>
+    <button class="vaciar-btn" onclick="vaciarCarrito()">Vaciar Carrito</button>
+    <button class="confirmar-btn" onclick="irAPedidos()">Continuar con el Pedido</button>
+    <div class="mensaje" id="msgPedido"></div>
+  </section>
+
+  <div class="volver">
+    <a th:href="@{/}">← Volver al Menú Principal</a>
+  </div>
+
+<script>
+  let carrito = JSON.parse(localStorage.getItem('carrito')) || [];
+
+  // Mostrar productos disponibles con botón para agregar
+  function cargarProductos() {
+    fetch('/api/productos')
+      .then(res => res.json())
+      .then(productos => {
+        const contenedor = document.getElementById('listaProductos');
+        contenedor.innerHTML = '';
+        productos.forEach(p => {
+          const div = document.createElement('div');
+          div.className = 'producto';
+          div.innerHTML = `
+            <div class="producto-info">
+              <img src="${p.imagenUrl}" alt="${p.nombre}">
+              <div>
+                <div><strong>${p.nombre}</strong></div>
+                <div>Precio: $${p.precio.toFixed(2)}</div>
+                <div>Stock: ${p.stock}</div>
+              </div>
+            </div>
+            <button onclick='agregarAlCarrito(${JSON.stringify(p)})' ${p.stock === 0 ? 'disabled' : ''}>Agregar</button>
+          `;
+          contenedor.appendChild(div);
+        });
+      });
+  }
+
+  // Agregar producto al carrito (suma cantidad, sin exceder stock)
+  function agregarAlCarrito(producto) {
+    const index = carrito.findIndex(p => p.id === producto.id);
+    if (index >= 0) {
+      if (carrito[index].cantidad < producto.stock) {
+        carrito[index].cantidad++;
+      } else {
+        alert('No hay más stock disponible para este producto.');
+        return;
+      }
+    } else {
+      carrito.push({
+        id: producto.id,
+        nombre: producto.nombre,
+        precio: producto.precio,
+        cantidad: 1,
+        stock: producto.stock
+      });
+    }
+    guardarCarrito();
+    mostrarCarrito();
+  }
+
+  // Guardar carrito en localStorage
+  function guardarCarrito() {
+    localStorage.setItem('carrito', JSON.stringify(carrito));
+  }
+
+  // Mostrar carrito actualizado
+  function mostrarCarrito() {
+    const contenedor = document.getElementById('listaCarrito');
+    contenedor.innerHTML = '';
+
+    if (carrito.length === 0) {
+      contenedor.innerHTML = '<p>El carrito está vacío.</p>';
+      document.getElementById('totalCarrito').textContent = 'Total: $0.00';
+      return;
+    }
+
+    let total = 0;
+
+    carrito.forEach((item, i) => {
+      const subtotal = item.precio * item.cantidad;
+      total += subtotal;
+
+      const div = document.createElement('div');
+      div.className = 'carrito-item';
+      div.innerHTML = `
+        <div class="carrito-info">
+          <img src="${item.imagenUrl || ''}" alt="${item.nombre}">
+          <div>
+            <div><strong>${item.nombre}</strong></div>
+            <div>Precio Unitario: $${item.precio.toFixed(2)}</div>
+          </div>
+        </div>
+        <div>
+          <input type="number" min="1" max="${item.stock}" value="${item.cantidad}" class="cantidad-input" onchange="cambiarCantidad(${item.id}, this.value)">
+          <button onclick="quitarProducto(${item.id})">Eliminar</button>
+        </div>
+        <div>
+          Subtotal: $${subtotal.toFixed(2)}
+        </div>
+      `;
+      contenedor.appendChild(div);
+    });
+
+    document.getElementById('totalCarrito').textContent = `Total: $${total.toFixed(2)}`;
+  }
+
+  // Cambiar cantidad del producto en el carrito (validar stock)
+  function cambiarCantidad(id, cantidad) {
+    cantidad = parseInt(cantidad);
+    if (cantidad <= 0) {
+      alert('La cantidad debe ser al menos 1');
+      mostrarCarrito();
+      return;
+    }
+
+    const index = carrito.findIndex(p => p.id === id);
+    if (index >= 0) {
+      if (cantidad <= carrito[index].stock) {
+        carrito[index].cantidad = cantidad;
+        guardarCarrito();
+        mostrarCarrito();
+      } else {
+        alert('No hay suficiente stock para esa cantidad');
+        mostrarCarrito();
+      }
+    }
+  }
+
+  // Quitar producto del carrito
+  function quitarProducto(id) {
+    carrito = carrito.filter(p => p.id !== id);
+    guardarCarrito();
+    mostrarCarrito();
+  }
+
+  // Vaciar carrito completo
+  function vaciarCarrito() {
+    if (confirm("¿Estás seguro que quieres vaciar el carrito?")) {
+      carrito = [];
+      guardarCarrito();
+      mostrarCarrito();
+    }
+  }
+
+  function irAPedidos() {
+  if (carrito.length === 0) {
+    alert("El carrito está vacío.");
+    return;
+  }
+  // Ya está guardado en localStorage, así que simplemente redirigimos
+  window.location.href = "/pedidos";
+  }
+  
+
+  // Inicializar página
+  window.onload = () => {
+    cargarProductos();
+    mostrarCarrito();
+  };
+</script>
+
+</body>
+</html>

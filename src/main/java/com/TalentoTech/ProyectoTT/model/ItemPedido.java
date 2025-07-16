@@ -3,26 +3,21 @@ package com.TalentoTech.ProyectoTT.model;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
-import java.util.List;
-
 @Entity
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Pedido {
+public class ItemPedido {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private LocalDateTime fecha;
+    @ManyToOne
+    private Producto producto;
 
-    private String estado;
+    private int cantidad;
 
-    private double total;
-
-    @OneToMany(cascade = CascadeType.ALL)
-    private List<ItemPedido> items;
+    private double subtotal;
 }

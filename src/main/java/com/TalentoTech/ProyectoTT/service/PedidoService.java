@@ -1,76 +1,68 @@
 package com.TalentoTech.ProyectoTT.service;
 
-import java.util.List;
-import java.util.ArrayList;
+import com.TalentoTech.ProyectoTT.model.ItemPedido;
 import com.TalentoTech.ProyectoTT.model.Pedido;
-import com.TalentoTech.ProyectoTT.model.Articulo;
+import com.TalentoTech.ProyectoTT.model.Producto;
+import com.TalentoTech.ProyectoTT.repository.ItemPedidoRepository;
 import com.TalentoTech.ProyectoTT.repository.PedidoRepository;
-import com.TalentoTech.ProyectoTT.repository.ArticuloRepository;
+import com.TalentoTech.ProyectoTT.repository.ProductoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class PedidoService {
 
     @Autowired
-    private PedidoRepository pedidoRepo;
+    private PedidoRepository pedidoRepository;
 
     @Autowired
-    private ArticuloRepository articuloRepo;
+    private ProductoRepository productoRepository;
 
-    public Pedido crearPedido(Pedido pedido) {
+    @Autowired
+    private ItemPedidoRepository itemPedidoRepository;
+
+    public Pedido crearPedido(List<ItemPedido> items) {
+        List<ItemPedido> itemsValidados = new ArrayList<>();
         double total = 0;
 
-        // Validar que los artículos existan y calcular total
-        List<Articulo> articulosValidos = new ArrayList<>();
-        for (Articulo art : pedido.getArticulos()) {
-            Articulo encontrado = articuloRepo.findById(art.getId())
-                .orElseThrow(() -> new RuntimeException("Articulo no existe: " + art.getId()));
-            articulosValidos.add(encontrado);
-            total += encontrado.getPrecio();
+        for (ItemPedido item : items) {
+            Producto producto = productoRepository.findById(item.getProducto().getId())
+                    .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+
+            if (producto.getStock() < item.getCantidad()) {
+                throw new RuntimeException("Stock insuficiente para el producto: " + producto.getNombre());
+            }
+
+            producto.setStock(producto.getStock() - item.getCantidad());
+            productoRepository.save(producto);
+
+            item.setProducto(producto);
+            item.setSubtotal(producto.getPrecio() * item.getCantidad());
+            itemsValidados.add(itemPedidoRepository.save(item));
+
+            total += item.getSubtotal();
         }
 
-        pedido.setArticulos(articulosValidos);
-        pedido.setTotal(total);
+        Pedido pedido = Pedido.builder()
+                .fecha(LocalDateTime.now())
+                .estado("pendiente")
+                .total(total)
+                .items(itemsValidados)
+                .build();
 
-        return pedidoRepo.save(pedido);
+        return pedidoRepository.save(pedido);
     }
 
-    public Pedido actualizarPedido(Long id, Pedido datos) {
-        Pedido pedidoExistente = pedidoRepo.findById(id)
-            .orElseThrow(() -> new RuntimeException("Pedido no encontrado con id " + id));
-
-        pedidoExistente.setCliente(datos.getCliente());
-        pedidoExistente.setFecha(datos.getFecha());
-
-        double total = 0;
-        List<Articulo> articulosValidos = new ArrayList<>();
-        for (Articulo art : datos.getArticulos()) {
-            Articulo encontrado = articuloRepo.findById(art.getId())
-                .orElseThrow(() -> new RuntimeException("Articulo no existe: " + art.getId()));
-            articulosValidos.add(encontrado);
-            total += encontrado.getPrecio();
-        }
-
-        pedidoExistente.setArticulos(articulosValidos);
-        pedidoExistente.setTotal(total);
-
-        return pedidoRepo.save(pedidoExistente);
+    public List<Pedido> obtenerTodos() {
+        return pedidoRepository.findAll();
     }
 
-    public void eliminarPedido(Long id) {
-        if (!pedidoRepo.existsById(id)) {
-            throw new RuntimeException("Pedido no existe con id " + id);
-        }
-        pedidoRepo.deleteById(id);
-    }
-
-    public List<Pedido> listarPedidos() {
-        return pedidoRepo.findAll();
-    }
-
-    public Pedido obtenerPedido(Long id) {
-        return pedidoRepo.findById(id)
-            .orElseThrow(() -> new RuntimeException("Pedido no encontrado con id " + id));
+    public Pedido obtenerPorId(Long id) {
+        return pedidoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Pedido no encontrado"));
     }
 }

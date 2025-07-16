@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Gestión de Categorías</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 30px;
+      background-color: #f4f4f4;
+    }
+
+    h1, h2 {
+      text-align: center;
+      color: #333;
+    }
+
+    section {
+      background: white;
+      padding: 20px;
+      margin-bottom: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+
+    input {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    button {
+      margin-top: 15px;
+      padding: 10px 15px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
+      text-align: center;
+    }
+
+    th {
+      background: #007bff;
+      color: white;
+    }
+
+    .volver {
+      text-align: center;
+      margin-top: 30px;
+    }
+
+    .volver a {
+      text-decoration: none;
+      color: #007bff;
+      font-weight: bold;
+    }
+
+    .volver a:hover {
+      text-decoration: underline;
+    }
+
+    .mensaje {
+      color: green;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Gestión de Categorías</h1>
+
+  <!-- Agregar Categoría -->
+  <section>
+    <h2>Agregar Categoría</h2>
+    <form id="formAgregarCategoria">
+      <label>Nombre de la categoría:</label>
+      <input type="text" id="nombreCategoria" required />
+      <button type="submit">Agregar</button>
+      <div class="mensaje" id="msgAgregarCategoria"></div>
+    </form>
+  </section>
+
+  <!-- Listar Categorías -->
+  <section>
+    <h2>Lista de Categorías</h2>
+    <button onclick="listarCategorias()">Actualizar Lista</button>
+    <table id="tablaCategorias">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nombre</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <!-- Eliminar Categoría -->
+  <section>
+    <h2>Eliminar Categoría</h2>
+    <input type="number" id="deleteCategoriaId" placeholder="ID de categoría" />
+    <button onclick="eliminarCategoria()">Eliminar</button>
+    <div class="mensaje" id="msgEliminarCategoria"></div>
+  </section>
+
+  <div class="volver">
+    <a th:href="@{/}">← Volver al Menú Principal</a>
+  </div>
+
+  <script>
+    // Agregar Categoría
+    document.getElementById("formAgregarCategoria").addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const categoria = {
+        nombre: nombreCategoria.value.trim()
+      };
+
+      fetch("/api/categorias", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(categoria)
+      })
+      .then(res => res.ok ? res.json() : Promise.reject())
+      .then(() => {
+        msgAgregarCategoria.textContent = "✅ Categoría agregada con éxito";
+        document.getElementById("formAgregarCategoria").reset();
+        listarCategorias();
+      })
+      .catch(() => msgAgregarCategoria.textContent = "❌ Error al agregar categoría");
+    });
+
+    // Listar Categorías
+    function listarCategorias() {
+      fetch("/api/categorias")
+        .then(res => res.json())
+        .then(data => {
+          const tbody = document.querySelector("#tablaCategorias tbody");
+          tbody.innerHTML = "";
+          data.forEach(c => {
+            const fila = `<tr>
+              <td>${c.id}</td>
+              <td>${c.nombre}</td>
+            </tr>`;
+            tbody.innerHTML += fila;
+          });
+        });
+    }
+
+    // Eliminar Categoría
+    function eliminarCategoria() {
+      const id = document.getElementById("deleteCategoriaId").value;
+      fetch(`/api/categorias/${id}`, { method: "DELETE" })
+        .then(res => {
+          if (res.ok) {
+            msgEliminarCategoria.textContent = "✅ Categoría eliminada";
+            listarCategorias();
+          } else {
+            throw new Error();
+          }
+        })
+        .catch(() => msgEliminarCategoria.textContent = "❌ Error al eliminar categoría");
+    }
+
+    // Auto listar al cargar
+    listarCategorias();
+  </script>
+</body>
+</html>
